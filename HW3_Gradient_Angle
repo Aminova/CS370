@@ -1,0 +1,67 @@
+dataDir = fullfile('..', 'data');
+im_parrot = fullfile(dataDir, 'parrot.jpg');
+im_parrot = im2double(imread(im_parrot));
+im_parrot = rgb2gray(im_parrot);
+
+%The filtered magnitudes are much lower than those of the original image
+
+bins = zeros(1, 9);
+
+% im_butterfly = fullfile(dataDir, 'butterfly.png');
+% im_butterfly = im2double(imread(im_butterfly));
+% im_butterfly = rgb2gray(im_butterfly);
+% im_butterfly = imgaussfilt(im_butterfly, 2);
+
+% myPic = fullfile(dataDir, 'parrot.jpg');
+% myPic = im2double(imread(im_parrot));
+% myPic = rgb2gray(im_parrot);
+
+[m, a] = getInfo(im_parrot);
+
+im2 = imgaussfilt(im_parrot, 2);
+% [m, a] = getInfo(im2);
+
+for i = 1:size(im_parrot,1)
+    for j = 1:size(im_parrot,2)
+        if(a(i, j) >= -90 && a(i, j) < -70)
+            bins(1) = bins(1) + m(i, j);
+        end
+        if(a(i, j) >= -70 && a(i, j) < -50)
+            bins(2) = bins(2) + m(i, j);
+        end
+        if(a(i, j) >= -50 && a(i, j) < -30)
+            bins(3) = bins(3) + m(i, j);
+        end
+        if(a(i, j) >= -30 && a(i, j) < -10)
+            bins(4) = bins(4) + m(i, j);
+        end
+        if(a(i, j) >= -10 && a(i, j) < 10)
+            bins(5) = bins(5) + m(i, j);
+        end
+        if(a(i, j) >= 10 && a(i, j) < 30)
+            bins(6) = bins(6) + m(i, j);
+        end
+        if(a(i, j) >= 30 && a(i, j) < 50)
+            bins(7) = bins(7) + m(i, j);
+        end
+        if(a(i, j) >= 50 && a(i, j) < 70)
+            bins(8) = bins(8) + m(i, j);
+        end
+        if(a(i, j) >= 70 && a(i, j) <= 90)
+            bins(9) = bins(9) + m(i, j);
+        end
+    end
+end
+
+bar(bins);
+
+function [m, a] = getInfo(im)
+fx = [-1, 0, 1];
+fy = transpose([-1, 0, 1]);
+
+gx = imfilter(im, fx, 'replicate');
+gy = imfilter(im, fy, 'replicate');
+
+m = sqrt(gx.^2 + gy.^2);
+a = atand(gy./(gx+10.^-10));
+end
