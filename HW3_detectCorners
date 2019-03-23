@@ -1,0 +1,86 @@
+function [cx, cy, cs, cornerScore] = detectCorners(I, isSimple, w, th)
+%                                     img, true, 1.5, 0.05
+%                                     w is window size
+%                                     th is user specified threshold
+
+% This code is part of:
+%
+%   CMPSCI 370: Computer Vision, Spring 2016
+%   University of Massachusetts, Amherst
+%   Instructor: Subhransu Maji
+%
+%   Homework 3
+
+% Convert to double format
+I = im2double(I); 
+
+% Convert color to grayscale
+if size(I, 3) > 1 
+    I = rgb2gray(I);
+end
+
+% Step 1: Compute corner score
+if isSimple
+    cornerScore = simpleScore(I, w);
+else
+    cornerScore = harrisScore(I, w);
+end
+
+% Step 2: Threshold corner score abd find peaks
+cornerScore (cornerScore < th) = 0;
+[cx, cy, cs] = nms(cornerScore);
+end
+
+
+%--------------------------------------------------------------------------
+%                                    Simple score function (Implement this)
+%--------------------------------------------------------------------------
+function cornerScore = simpleScore(I, w)
+
+cornerScore = zeros(size(I));
+
+f(:, :, 1) = [0 1 0; 0 -1 0; 0 0 0]; %N
+f(:, :, 2) = [0 0 1; 0 -1 0; 0 0 0]; %NE
+f(:, :, 3) = [0 0 0; 0 -1 1; 0 0 0]; %E
+f(:, :, 4) = [0 0 0; 0 -1 0; 0 0 1]; %SE
+f(:, :, 5) = [0 0 0; 0 -1 0; 0 1 0]; %S
+f(:, :, 6) = [0 0 0; 0 -1 0; 1 0 0]; %SW
+f(:, :, 7) = [0 0 0; 1 -1 0; 0 0 0]; %W
+f(:, :, 8) = [1 0 0; 0 -1 0; 0 0 0]; %NW
+
+for i = 1:8
+    imdiff = imfilter(I, f(:, :, i), 'replicate');
+    cornerScore = cornerScore + imfilter(imdiff.^2, ones(size(w)), 'replicate');
+end
+
+end
+
+
+%--------------------------------------------------------------------------
+%                                    Harris score function (Implement this)
+%--------------------------------------------------------------------------
+function cornerScore= harrisScore(I, w)
+
+fx = [-1 0 1; -1 0 1; -1 0 1];
+% Ix = filter2(fx, I);
+Ix = imfilter(I, fx, 'replicate');
+
+fy = [1 1 1; 0 0 0; -1 -1 -1];
+% Iy = filter2(fy, I); 
+Iy = imfilter(I, fy, 'replicate');
+
+Ix2 = Ix.^2;
+Iy2 = Iy.^2;
+Ixy = Ix.*Iy;
+Iyx = Iy.*Ix;
+
+Ix2 = imgaussfilt(Ix2, w);
+Iy2 = imgaussfilt(Iy2, w);
+Ixy = imgaussfilt(Ixy, w);
+Iyx = imgaussfilt(Iyx, w);
+
+k = 0.04;
+
+cornerScore = (Ix2.*Iy2 - Ixy.*Iyx) - k*(Ix2 + Iy2).^2;
+end
+
